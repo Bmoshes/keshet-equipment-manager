@@ -8,6 +8,7 @@ import { PlusIcon, SparkIcon } from "@/components/ui/Icons";
 import { ActiveLoans } from "./ActiveLoans";
 import { AddEquipmentDrawer } from "./AddEquipmentDrawer";
 import { AttentionSection } from "./AttentionSection";
+import { ManagerAgentChat } from "./ManagerAgentChat";
 import { StatsCards } from "./StatsCards";
 
 type InsightAction = NonNullable<Insight["action"]>;
@@ -60,6 +61,7 @@ export function ManagerDashboard({
       <ActiveLoans equipment={equipment} loans={loans} users={users} onReturn={onReturn} />
       <EquipmentList equipment={equipment} loans={loans} role="manager" currentUserId={currentUserId} onBorrow={() => undefined} onAvailabilityChange={onAvailabilityChange} />
       <AddEquipmentDrawer open={drawerOpen} onClose={closeDrawer} onSubmit={onAdd} />
+      <ManagerAgentChat equipment={equipment} loans={loans} users={users} insightCount={insights.length} onAction={handleInsightAction} />
     </main>
   );
 }

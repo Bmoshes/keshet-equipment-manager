@@ -15,6 +15,20 @@ export type Insight = {
   };
 };
 
+export type ManagerAgentReply = {
+  text: string;
+  action?: NonNullable<Insight["action"]>;
+};
+
+export type ManagerAgentPromptId = "overview" | "long-loans" | "low-availability" | "employee-load";
+
+export const managerAgentPrompts: Array<{ id: ManagerAgentPromptId; label: string }> = [
+  { id: "overview", label: "מה דורש תשומת לב?" },
+  { id: "long-loans", label: "איזה ציוד מושאל זמן רב?" },
+  { id: "low-availability", label: "איפה הזמינות נמוכה?" },
+  { id: "employee-load", label: "אצל מי נמצא הציוד?" },
+];
+
 const DAY_IN_MS = 86_400_000;
 
 const categoryNames: Record<EquipmentCategory, { singular: string; plural: string }> = {
@@ -32,15 +46,30 @@ function elapsedDays(value: string) {
   return Math.max(0, Math.floor((Date.now() - timestamp) / DAY_IN_MS));
 }
 
-export function generateManagerInsights(
+function getActiveLoans(equipment: EquipmentItem[], loans: Loan[]) {
+  const equipmentIds = new Set(equipment.map((item) => item.id));
+  return loans.filter((loan) => loan.status === "active" && equipmentIds.has(loan.equipmentId));
+}
+
+function getEmployeeLoanCounts(activeLoans: Loan[]) {
+  const counts = new Map<string, number>();
+  for (const loan of activeLoans) {
+    counts.set(loan.employeeId, (counts.get(loan.employeeId) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function formatItemCount(count: number) {
+  return count === 1 ? "פריט אחד" : `${count} פריטים`;
+}
+
+function collectManagerInsights(
   equipment: EquipmentItem[],
   loans: Loan[],
   users: User[],
 ): Insight[] {
   const equipmentById = new Map(equipment.map((item) => [item.id, item]));
-  const activeLoans = loans.filter(
-    (loan) => loan.status === "active" && equipmentById.has(loan.equipmentId),
-  );
+  const activeLoans = getActiveLoans(equipment, loans);
   const insights: Insight[] = [];
 
   const longLoans = activeLoans
@@ -102,10 +131,7 @@ export function generateManagerInsights(
     });
   }
 
-  const activeLoansByEmployee = new Map<string, number>();
-  for (const loan of activeLoans) {
-    activeLoansByEmployee.set(loan.employeeId, (activeLoansByEmployee.get(loan.employeeId) ?? 0) + 1);
-  }
+  const activeLoansByEmployee = getEmployeeLoanCounts(activeLoans);
 
   for (const user of users) {
     const count = activeLoansByEmployee.get(user.id) ?? 0;
@@ -122,6 +148,65 @@ export function generateManagerInsights(
   }
 
   return insights
-    .sort((first, second) => second.priority - first.priority || first.id.localeCompare(second.id))
-    .slice(0, 3);
+    .sort((first, second) => second.priority - first.priority || first.id.localeCompare(second.id));
+}
+
+export function generateManagerInsights(
+  equipment: EquipmentItem[],
+  loans: Loan[],
+  users: User[],
+): Insight[] {
+  return collectManagerInsights(equipment, loans, users).slice(0, 3);
+}
+
+export function getManagerAgentReply(
+  promptId: ManagerAgentPromptId,
+  equipment: EquipmentItem[],
+  loans: Loan[],
+  users: User[],
+): ManagerAgentReply {
+  const activeLoans = getActiveLoans(equipment, loans);
+  const allInsights = collectManagerInsights(equipment, loans, users);
+  const insights = allInsights.slice(0, 3);
+
+  if (promptId === "long-loans") {
+    const insight = allInsights.find((item) => item.id === "long-loans");
+    return insight
+      ? { text: insight.description, action: insight.action }
+      : { text: "אין כרגע ציוד שמושאל יותר מ־7 ימים." };
+  }
+
+  if (promptId === "low-availability") {
+    const lowAvailability = allInsights.filter((item) => item.id.startsWith("low-availability-"));
+    return lowAvailability.length > 0
+      ? {
+          text: lowAvailability.map((item) => item.description).join("\n"),
+          action: lowAvailability[0].action,
+        }
+      : { text: "לא זיהיתי כרגע קטגוריה עם זמינות נמוכה." };
+  }
+
+  if (promptId === "employee-load") {
+    const counts = getEmployeeLoanCounts(activeLoans);
+    const employeeLoads = users
+      .map((user) => ({ user, count: counts.get(user.id) ?? 0 }))
+      .filter(({ count }) => count > 0)
+      .sort((first, second) => second.count - first.count || first.user.name.localeCompare(second.user.name, "he"));
+    if (employeeLoads.length === 0) return { text: "אין כרגע ציוד מושאל אצל עובדים." };
+
+    return {
+      text: employeeLoads.slice(0, 3).map(({ user, count }) => `${user.name}: ${formatItemCount(count)}`).join("\n"),
+      action: { label: "הצג השאלות", type: "employee-load" },
+    };
+  }
+
+  if (promptId === "overview") {
+    if (insights.length === 0) return { text: "הכול נראה תקין כרגע. אין נושאים חריגים שדורשים טיפול." };
+    return {
+      text: `מצאתי ${insights.length} נושאים שכדאי לבדוק:\n${insights.map((insight, index) => `${index + 1}. ${insight.title} — ${insight.description}`).join("\n")}`,
+      action: insights[0].action,
+    };
+  }
+
+  return { text: "לא נמצאה תשובה מתאימה." };
 }
