@@ -18,7 +18,7 @@ export function ActiveLoans({ equipment, loans, users, onReturn }: { equipment: 
     closeConfirmation();
   };
   return (
-    <section className="surface overflow-hidden">
+    <section id="active-loans" className="surface scroll-mt-24 overflow-hidden">
       <div className="flex items-end justify-between gap-3 border-b border-slate-100 px-4 py-4 sm:px-5"><div><p className="eyebrow">מעקב שוטף</p><h2 className="mt-1 text-xl font-extrabold">השאלות פעילות</h2></div><div className="text-left"><p className="text-sm font-bold text-ink">{activeLoans.length} השאלות</p><p className="hidden text-xs text-slate-400 sm:block">מהוותיקה לחדשה</p></div></div>
       {activeLoans.length > 0 ? <><div className="hidden overflow-x-auto sm:block"><table className="w-full min-w-[760px] text-right"><thead><tr className="bg-slate-50 text-xs font-bold text-slate-500"><th className="px-5 py-3">ציוד</th><th className="px-5 py-3">עובד</th><th className="px-5 py-3">תאריך השאלה</th><th className="px-5 py-3">משך</th><th className="px-5 py-3"><span className="sr-only">פעולה</span></th></tr></thead><tbody className="divide-y divide-slate-100">{activeLoans.map((loan) => {
         const item = equipment.find((entry) => entry.id === loan.equipmentId);
