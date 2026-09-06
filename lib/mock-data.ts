@@ -1,11 +1,6 @@
 import type { EquipmentItem, Loan, User } from "./types";
 
-const daysAgo = (days: number, hour = 9) => {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
-  date.setHours(hour, 30, 0, 0);
-  return date.toISOString();
-};
+const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
 
 export const users: User[] = [
   { id: "user-bar", name: "בר משה" },

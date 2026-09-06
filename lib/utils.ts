@@ -4,7 +4,12 @@ export const statusLabels: Record<EquipmentStatus, string> = { available: "זמ�
 export const categoryLabels: Record<EquipmentCategory, string> = { laptop: "מחשב נייד", monitor: "מסך", projector: "מקרן", recording: "ציוד הקלטה" };
 
 export function formatDate(value: string) {
-  return new Intl.DateTimeFormat("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value));
+  return new Intl.DateTimeFormat("he-IL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Asia/Jerusalem",
+  }).format(new Date(value));
 }
 
 export function loanDuration(value: string) {
