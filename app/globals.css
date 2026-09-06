@@ -39,6 +39,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   .secondary-button { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink transition duration-200 hover:border-brand-500 hover:bg-brand-50/50 hover:text-brand-700 active:bg-brand-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400; }
   .icon-button { @apply inline-grid h-11 w-11 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-ink; }
   .eyebrow { @apply text-xs font-bold tracking-wide text-brand-700; }
+  .metric-number {
+    @apply text-3xl font-extrabold leading-none tracking-tight text-ink;
+    direction: ltr;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  .metric-label { @apply text-sm font-bold leading-5 text-slate-700; }
+  .metric-hint { @apply mt-0.5 text-xs leading-4 text-slate-500; }
   .field-label { @apply flex flex-wrap items-center gap-1 text-sm font-bold text-ink; }
   .field-input { @apply mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-ink shadow-sm transition placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-100; }
   .field-input-error { @apply border-red-400 focus:border-red-500 focus:ring-red-100; }
